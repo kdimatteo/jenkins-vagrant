@@ -2,16 +2,16 @@
 
 if [ ! -f /usr/bin/git ]; 
 then
-  echo "-------- PROVISIONING GIT ------------"
+  echo "-------- PROVISIONING GIT ---------------"
   echo "---------------------------------------------"
   apt-get update
   #apt-get -y install git
   #http://unix.stackexchange.com/questions/33617/how-can-i-update-to-a-newer-version-of-git-using-apt-get
-  sudo add-apt-repository ppa:git-core/ppa -y
-  sudo apt-get update
-  sudo apt-get install git
+  apt-get -y install python-software-properties software-properties-common
+  add-apt-repository ppa:git-core/ppa -y
+  apt-get update
+  apt-get -y install git
   git --version
-
 
 else
   echo "CHECK - Git already installed"
@@ -19,20 +19,18 @@ fi
 
 
 if [ ! -f /usr/bin/node ];
+then
   echo "------ PROVISIONING NODE ---------"
   apt-get -y install nodejs
   apt-get -y install npm
 
-  node_link=/usr/bin/node
-  if [ ! -L $node_link ]
-    then
-      echo "Fix Node JS naming issue with a symlink"
-      sudo ln -s /usr/bin/nodejs $node_link
-  fi
+  echo "Fix Node JS naming issue with a symlink"
+  sudo ln -s /usr/bin/nodejs /usr/bin/node
 
-else 
-  echo "CHECK - NodeJS already installed"
+else
+  echo "CHECK - nodeJS already installed"
 fi
+
 
 if [ ! -f /usr/lib/jvm/java-7-oracle/bin/java ]; 
 then
