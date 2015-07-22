@@ -1,5 +1,18 @@
 #!/bin/bash
 
+function checkjenkins {
+  S=`curl -f --silent http://localhost:6060/api/json | grep -Po 'mode'`
+  if [[ $S ]]; then
+    return 0
+  else
+    echo "waiting for Jekins..."
+    sleep 2
+    checkjenkins
+  fi  
+}
+
+
+
 if [ ! -f /usr/bin/git ]; 
 then
   echo "-------- PROVISIONING GIT ---------------"
@@ -77,50 +90,34 @@ then
   sed -i 's/8080/6060/g' /etc/default/jenkins
   /etc/init.d/jenkins restart
 
+  echo "Waiting for Jenkins to boot (this may take a moment) ..."
+  checkjenkins
+
   #download jenkins CLI
   wget http://localhost:6060/jnlpJars/jenkins-cli.jar
+  curl  -L http://updates.jenkins-ci.org/update-center.json | sed '1d;$d' | curl -X POST -H 'Accept: application/json' -d @- http://localhost:6060/updateCenter/byId/default/postBack
+  
+  echo "Update plugins list..."
+  /etc/init.d/jenkins restart
+  checkjenkins
 
   echo "Installing plugins..."
   java -jar jenkins-cli.jar -s http://localhost:6060/ install-plugin git
   java -jar jenkins-cli.jar -s http://localhost:6060/ install-plugin git-client
-  java -jar jenkins-cli.jar -s http://localhost:6060/ install-plugin credendials
+  java -jar jenkins-cli.jar -s http://localhost:6060/ install-plugin credentials
   java -jar jenkins-cli.jar -s http://localhost:6060/ install-plugin multiple-scms
   java -jar jenkins-cli.jar -s http://localhost:6060/ install-plugin github-oauth
   java -jar jenkins-cli.jar -s http://localhost:6060/ install-plugin conditional-buildstep
+  java -jar jenkins-cli.jar -s http://localhost:6060/ install-plugin greenballs
+  java -jar jenkins-cli.jar -s http://localhost:6060/ install-plugin embeddable-build-status
 
 else
   echo "CHECK - Jenkins already installed"
 fi
 
 
-### Everything below this point is not stricly needed for Jenkins to work
-###
-
-# if [ ! -f /etc/init.d/tomcat7 ]; 
-# then
-#   echo "-------- PROVISIONING TOMCAT ------------"
-#   echo "-----------------------------------------"
-
-
-#   ## Install Tomcat (port 8080) 
-#   # This gives us something to deploy builds into
-#   # CATALINA_BASE=/var/lib/tomcat7
-#   # CATALINE_HOME=/usr/share/tomcat7
-#   export JAVA_HOME="/usr/lib/jvm/java-7-oracle"
-#   apt-get -y install tomcat7
-
-#   # Work around a bug in the default tomcat start script
-#   sed -i 's/export JAVA_HOME/export JAVA_HOME=\"\/usr\/lib\/jvm\/java-7-oracle\"/g' /etc/init.d/tomcat7
-#   /etc/init.d/tomcat7 stop
-#   /etc/init.d/tomcat7 start
-# else
-#   echo "CHECK - Tomcat already installed"
-# fi
-
-
 echo "-------- PROVISIONING DONE ------------"
 echo "-- Jenkins: http://localhost:6060      "
-#echo "-- Tomcat7: http://localhost:7070      "
 echo "---------------------------------------"
 
 
