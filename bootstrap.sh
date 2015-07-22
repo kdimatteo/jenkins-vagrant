@@ -111,6 +111,9 @@ then
   java -jar jenkins-cli.jar -s http://localhost:6060/ install-plugin greenballs
   java -jar jenkins-cli.jar -s http://localhost:6060/ install-plugin embeddable-build-status
 
+  echo "restart jenkins..."
+  /etc/init.d/jenkins restart
+
 else
   echo "CHECK - Jenkins already installed"
 fi
